@@ -51,7 +51,7 @@ class MLClient(asynchat.async_chat):
 
     def __init__(self, sock, addr, ml, mld, interfaces):
         asynchat.async_chat.__init__(self, sock)
-        self.set_terminator("\r\n")
+        self.set_terminator(";\n")
         self.data = ""
         self.ml = ml
         self.addr = addr
@@ -92,6 +92,18 @@ class MLClient(asynchat.async_chat):
                     if found == 0:
                         self.sendNoLampsDetected()
                         ok = False
+                elif cmd == "3": # change color
+                    self.push("hit 3: = %s" % s)
+                    if s[1] == "0":
+                        for n in self.ml:
+                            if n.ready:
+                                self.push("Send %2d (%s) -> %s %s %s\r\n" % (n.address, n.name, int(s[2]),int(s[3]),int(s[4] )))
+                                m = self.ml.getLamp(n.address)
+                                m.setcolor([int( s[2] ), int( s[3] ), int( s[4])] )
+                    else:
+                        m = self.ml.getLamp(s[1])
+                        self.push("Send %2d (%s) -> %s %s %s\r\n" % (m.address, m.name, int(s[2]), int(s[3]), int(s[4])))
+                        m.setcolor([int(s[2]), int(s[3]), int(s[4])])
                 elif cmd == "003": # change color
                     if s[1] == "0":
                         for n in self.ml:
